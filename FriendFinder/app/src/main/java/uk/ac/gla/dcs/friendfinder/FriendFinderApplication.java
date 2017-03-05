@@ -32,9 +32,10 @@ public class FriendFinderApplication extends Application implements BootstrapNot
     private static final String TAG = "BeaconReferenceApp";
     private RegionBootstrap regionBootstrap;
     private BackgroundPowerSaver backgroundPowerSaver;
-    private boolean haveDetectedBeaconsSinceBoot = false;
     private MainActivity monitoringActivity = null;
     private SQLiteDatabase database;
+
+    public final long GENERIC_STRENGTH = 25000;
 
     public List<Region> regions;
 
@@ -44,9 +45,7 @@ public class FriendFinderApplication extends Application implements BootstrapNot
 
         database = openOrCreateDatabase("friendfinder",MODE_PRIVATE,null);
 
-        Log.d(TAG, "setting up background monitoring for beacons and power saving");
         beaconManager.getBeaconParsers().add(new BeaconParser().setBeaconLayout("m:2-3=0215,i:4-19,i:20-21,i:22-23,p:24-24"));
-
         setupRegions();
 
         backgroundPowerSaver = new BackgroundPowerSaver(this);
@@ -81,44 +80,19 @@ public class FriendFinderApplication extends Application implements BootstrapNot
         Log.d(TAG, "didEnterRegion: FOUND " + arg0.toString());
         if(monitoringActivity == null) {
             Log.d(TAG, "Sending notification.");
+            DatabaseHelper.getInstance(getApplicationContext()).updateTimestampAndStrengthForBeacon(arg0.getId1().toString(), arg0.getId2().toString(), arg0.getId3().toString(), GENERIC_STRENGTH);
             sendNotification(arg0);
         } else {
             Log.d(TAG, "didRangeBeaconsInRegion: App is in foreground. No notification.");
         }
     }
 
-    /*@Override
-    public void didRangeBeaconsInRegion(Collection<Beacon> beacons, Region region) {
-        Log.d(TAG, "didRangeBeaconsInRegion -- beacons: " + beacons.toString());
-        if (!haveDetectedBeaconsSinceBoot) {
-            Log.d(TAG, "auto launching MainActivity");
-            Intent intent = new Intent(this, MainActivity.class);
-            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-
-            this.startActivity(intent);
-            haveDetectedBeaconsSinceBoot = true;
-        } else {
-            if(monitoringActivity == null) {
-                Log.d(TAG, "Sending notification.");
-                sendNotification(region);
-            } else {
-                Log.d(TAG, "didRangeBeaconsInRegion: App is in foreground. No notification.");
-            }
-        }
-    }*/
-
     @Override
     public void didExitRegion(Region region) {
-        if (monitoringActivity != null) {
-            monitoringActivity.logToDisplay("I no longer see a beacon.");
-        }
     }
 
     @Override
     public void didDetermineStateForRegion(int state, Region region) {
-        if (monitoringActivity != null) {
-            monitoringActivity.logToDisplay("I have just switched from seeing/not seeing beacons: " + state);
-        }
     }
 
     private void sendNotification(Region arg0) {
