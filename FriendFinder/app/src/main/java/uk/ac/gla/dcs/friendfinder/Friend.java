@@ -16,9 +16,10 @@ public class Friend {
     private long lastStrength;
     private long timestamp;
     private long added;
+    private long notifications;
 
 
-    public Friend(long id, String name, String phone, String beaconId1, String beaconId2, String beaconId3, long lastStrength, long timestamp, long added) {
+    public Friend(long id, String name, String phone, String beaconId1, String beaconId2, String beaconId3, long lastStrength, long timestamp, long added, long notifications) {
         this.id = id;
         this.name = name;
         this.phone = phone;
@@ -29,9 +30,10 @@ public class Friend {
         this.lastStrength = lastStrength;
         this.timestamp = timestamp;
         this.added = added;
+        this.notifications = notifications;
     }
 
-    public Friend(long id, String name, String phone, Beacon beacon, long lastStrength, long timestamp, long added) {
+    public Friend(long id, String name, String phone, Beacon beacon, long lastStrength, long timestamp, long added, long notifications) {
         this.id = id;
         this.name = name;
         this.phone = phone;
@@ -42,6 +44,7 @@ public class Friend {
         this.lastStrength = lastStrength;
         this.timestamp = timestamp;
         this.added = added;
+        this.notifications = notifications;
     }
 
     public long getId() {

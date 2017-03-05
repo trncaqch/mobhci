@@ -101,8 +101,8 @@ public class FriendFinderApplication extends Application implements BootstrapNot
         if(friend != null) {
             NotificationCompat.Builder builder =
                     new NotificationCompat.Builder(this)
-                            .setContentTitle(friend.getName() + " is nearby")
-                            .setContentText("Open BeamPal for more")
+                            .setContentTitle(friend.getName() + getString(R.string.is_nearby))
+                            .setContentText(getString(R.string.open_for_more))
                             .setSmallIcon(R.drawable.notification);
 
             builder.setVibrate(new long[] { 0, 500, 200, 500, 200 });
@@ -134,4 +134,3 @@ public class FriendFinderApplication extends Application implements BootstrapNot
         return database;
     }
 }
-

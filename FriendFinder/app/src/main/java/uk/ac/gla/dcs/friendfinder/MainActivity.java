@@ -17,6 +17,7 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.text.format.DateUtils;
 import android.util.Log;
 import android.view.View;
 import android.view.Menu;
@@ -54,8 +55,6 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer {
     private final int FULL_REFRESH_INTERVAL = 5000;
     private Handler mHandler;
 
-    private LinkedHashMap<String, BeaconScanResult> nearby;
-
     private BeaconManager beaconManager = BeaconManager.getInstanceForApplication(this);
 
 
@@ -67,23 +66,22 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer {
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        ListView listView = (ListView) findViewById(R.id.listview);
+        final ListView listView = (ListView) findViewById(R.id.listview);
 
         setAdapter();
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view,
                                     int position, long id) {
-
-                    Intent intent = new Intent(MainActivity.this, FriendActivity.class);
-                    startActivity(intent);
-                    finish();
-
+                Intent intent = new Intent(MainActivity.this, FriendActivity.class);
+                intent.putExtra("friendId", ((Friend)listView.getAdapter().getItem(position)).getId() + "");
+                logToDisplay("Putting intent extra: " + ((Friend)listView.getAdapter().getItem(position)).getId() + "");
+                startActivity(intent);
             }
         });
 
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
+        FloatingActionButton addbutton = (FloatingActionButton) findViewById(R.id.addbutton);
+        addbutton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
@@ -100,8 +98,8 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer {
             // Android M Permission check
             if (this.checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
                 final AlertDialog.Builder builder = new AlertDialog.Builder(this);
-                builder.setTitle("This app needs location access");
-                builder.setMessage("Please grant location access so this app can detect beacons in the background.");
+                builder.setTitle(getString(R.string.location_title));
+                builder.setMessage(getString(R.string.location_body));
                 builder.setPositiveButton(android.R.string.ok, null);
                 builder.setOnDismissListener(new DialogInterface.OnDismissListener() {
 
@@ -143,8 +141,8 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer {
                     Log.d(TAG, "coarse location permission granted");
                 } else {
                     final AlertDialog.Builder builder = new AlertDialog.Builder(this);
-                    builder.setTitle("Functionality limited");
-                    builder.setMessage("Since location access has not been granted, this app will not be able to discover beacons when in the background.");
+                    builder.setTitle(getString(R.string.limited_title));
+                    builder.setMessage(getString(R.string.limited_body));
                     builder.setPositiveButton(android.R.string.ok, null);
                     builder.setOnDismissListener(new DialogInterface.OnDismissListener() {
 
@@ -195,8 +193,8 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer {
         try {
             if (!BeaconManager.getInstanceForApplication(this).checkAvailability()) {
                 final AlertDialog.Builder builder = new AlertDialog.Builder(this);
-                builder.setTitle("Bluetooth not enabled");
-                builder.setMessage("Please enable bluetooth in settings and restart this application.");
+                builder.setTitle(getString(R.string.bluetooth_not_enabled));
+                builder.setMessage(getString(R.string.please_enable_bluetooth));
                 builder.setPositiveButton(android.R.string.ok, null);
                 builder.setOnDismissListener(new DialogInterface.OnDismissListener() {
                     @Override
@@ -210,8 +208,8 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer {
         }
         catch (RuntimeException e) {
             final AlertDialog.Builder builder = new AlertDialog.Builder(this);
-            builder.setTitle("Bluetooth LE not available");
-            builder.setMessage("Sorry, this device does not support Bluetooth LE.");
+            builder.setTitle(getString(R.string.no_le));
+            builder.setMessage(getString(R.string.sorry_no_support_for_le));
             builder.setPositiveButton(android.R.string.ok, null);
             builder.setOnDismissListener(new DialogInterface.OnDismissListener() {
 
@@ -223,9 +221,7 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer {
 
             });
             builder.show();
-
         }
-
     }
 
     public void logToDisplay(final String line) {
@@ -286,7 +282,7 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer {
                 }
 
                 strengthIcon.setImageResource(drawable);
-                secondLine.setText(upToDateFriend.getLastUpdate().toString());
+                secondLine.setText(getString(R.string.last_seen) + " " + DateUtils.getRelativeTimeSpanString(upToDateFriend.getLastUpdate().getTime()));
             }
 
             logToDisplay("refreshScanResults: updated");
@@ -324,7 +320,7 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer {
 
         try {
             logToDisplay("Starting again");
-            beaconManager.startRangingBeaconsInRegion(new Region("myRangingUniqueId", null, null, null));
+            beaconManager.startRangingBeaconsInRegion(new Region("everywhere", null, null, null));
 
         } catch (RemoteException e) {
             logToDisplay("Exception!");

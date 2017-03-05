@@ -1,4 +1,15 @@
 <resources>
     <string name="app_name">BeamPal</string>
     <string name="action_settings">Settings</string>
+    <string name="is_nearby"> is nearby</string>
+    <string name="open_for_more">Open BeamPal for more</string>
+    <string name="bluetooth_not_enabled">Bluetooth not enabled</string>
+    <string name="please_enable_bluetooth">Please enable Bluetooth in Settings and restart BeamPal</string>
+    <string name="no_le">Bluetooth LE not available</string>
+    <string name="sorry_no_support_for_le">Sorry, this device does not support Bluetooth LE</string>
+    <string name="location_title">BeamPal needs location access to work</string>
+    <string name="location_body">We need it so that we can detect beacons in the background</string>
+    <string name="limited_title">Limited Functionality</string>
+    <string name="limited_body">Since location access has not been granted, BeamPal will not be able to discover beacons when in the background.</string>
+    <string name="last_seen">Last Seen: </string>
 </resources>
