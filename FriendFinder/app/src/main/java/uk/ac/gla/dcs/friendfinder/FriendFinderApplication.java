@@ -18,6 +18,9 @@ import org.altbeacon.beacon.powersave.BackgroundPowerSaver;
 import org.altbeacon.beacon.startup.BootstrapNotifier;
 import org.altbeacon.beacon.startup.RegionBootstrap;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class FriendFinderApplication extends Application implements BootstrapNotifier {
     private static final String TAG = "BeaconReferenceApp";
     private RegionBootstrap regionBootstrap;
@@ -89,7 +92,7 @@ public class FriendFinderApplication extends Application implements BootstrapNot
                 // If we have already seen beacons before, but the monitoring activity is not in
                 // the foreground, we send a notification to the user on subsequent detections.
                 Log.d(TAG, "Sending notification.");
-                sendNotification();
+                sendNotification(arg0);
             }
         }
 
@@ -110,7 +113,16 @@ public class FriendFinderApplication extends Application implements BootstrapNot
         }
     }
 
-    private void sendNotification() {
+    private void sendNotification(Region region) {
+
+        List<Friend> foundFriend = DatabaseHelper.getInstance(getBaseContext()).getAllFriends();
+        StringBuilder notificationString = new StringBuilder();
+        int numberOfMatches = 0;
+
+        /*for(Friend friend : foundFriend) {
+            if(region.matchesBeacon(friend.bea))
+        }*/
+
         NotificationCompat.Builder builder =
                 new NotificationCompat.Builder(this)
                         .setContentTitle("Beacon Reference Application")

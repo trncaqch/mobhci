@@ -72,12 +72,8 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer {
             @Override
             public void onItemClick(AdapterView<?> parent, View view,
                                     int position, long id) {
-                //Toast.makeText(getApplicationContext(),
-                  //      "Click ListItem Number " + position, Toast.LENGTH_LONG)
-                    //    .show();
 
                     Intent intent = new Intent(MainActivity.this, FriendActivity.class);
-                    //intent.putExtra("calc",calculator);
                     startActivity(intent);
                     finish();
 
@@ -118,16 +114,12 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer {
         }
 
         beaconManager.bind(this);
-
-        mHandler = new Handler();
-        mStatusChecker.run();
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
         beaconManager.unbind(this);
-        mHandler.removeCallbacks(mStatusChecker);
     }
 
     Runnable mStatusChecker = new Runnable() {
@@ -170,19 +162,24 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer {
     @Override
     public void onResume() {
         super.onResume();
+
         refreshScanResults(true);
         ((FriendFinderApplication) this.getApplicationContext()).setMonitoringActivity(this);
+
+        mHandler = new Handler();
+        mStatusChecker.run();
     }
 
     @Override
     public void onPause() {
         super.onPause();
         ((FriendFinderApplication) this.getApplicationContext()).setMonitoringActivity(null);
+        mHandler.removeCallbacks(mStatusChecker);
     }
 
     private void setAdapter() {
         ListView listView = (ListView) findViewById(R.id.listview);
-        adapter = new FriendListAdapter(this.getBaseContext(), DatabaseHelper.getInstance(getBaseContext()).getAllFriends());
+        adapter = new FriendListAdapter(this.getBaseContext(), DatabaseHelper.getInstance(getBaseContext()).getAllFriends(), this);
         listView.setAdapter(adapter);
     }
 
@@ -295,7 +292,7 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer {
             @Override
             public void didRangeBeaconsInRegion(Collection<Beacon> beacons, Region region) {
 
-                logToDisplay("DATABASE: " + DatabaseHelper.getInstance(getBaseContext()).getAllFriends().toString());
+                logToDisplay("didRangeBeaconsInRegion -- DATABASE: " + DatabaseHelper.getInstance(getBaseContext()).getAllFriends().toString());
 
                 boolean addedSomething = false;
                 if (beacons.size() > 0) {

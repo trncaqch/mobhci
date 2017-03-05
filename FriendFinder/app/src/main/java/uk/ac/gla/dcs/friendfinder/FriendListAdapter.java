@@ -18,10 +18,13 @@ public class FriendListAdapter extends ArrayAdapter<Friend> {
     private final Context context;
     public List<Friend> values;
 
-    public FriendListAdapter(Context context, List<Friend> values) {
+    private MainActivity superview;
+
+    public FriendListAdapter(Context context, List<Friend> values, MainActivity superview) {
         super(context, -1, values);
         this.context = context;
         this.values = values;
+        this.superview = superview;
     }
 
     @Override
@@ -39,9 +42,11 @@ public class FriendListAdapter extends ArrayAdapter<Friend> {
         ImageView imageView = (ImageView) rowView.findViewById(R.id.icon);
 
         firstLine.setText(values.get(position).getName());
-        secondLine.setText("Last seen at " + values.get(position).getPhone().toString());
+        secondLine.setText("");
 
-        imageView.setImageResource(R.drawable.noti);
+        if(superview != null) {
+            superview.refreshScanResults(false);
+        }
 
         return rowView;
     }
