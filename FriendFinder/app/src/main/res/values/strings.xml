@@ -21,5 +21,9 @@
     <string name="delete">Remove</string>
     <string name="cancel">Cancel</string>
     <string name="not_implemented">Not Implemented</string>
-    <string name="edit_phone_number">Edit Phone Number</string>
+    <string name="edit_phone_number">Edit Details</string>
+    <string name="name_hint">Name</string>
+    <string name="phone_hint">Phone Number</string>
+    <string name="save">Save</string>
+    <string name="cant_make_call">Unable to make call</string>
 </resources>

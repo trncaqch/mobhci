@@ -220,6 +220,14 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         return cursor.getLong(columnIndex);
     }
 
+    public synchronized int setNameAndPhoneForFriend(long friendId, String name, String phone) {
+        ContentValues cv = new ContentValues();
+        cv.put(FRIENDS_COLUMN_NAME,name);
+        cv.put(FRIENDS_COLUMN_PHONE,phone);
+
+        return mDatabase.update(DatabaseHelper.FRIENDS_TABLE, cv, FRIENDS_COLUMN_ID + "=?", new String[]{friendId + ""});
+    }
+
     public synchronized int setNotificationsEnabledForFriend(long friendId, boolean enabled) {
         ContentValues cv = new ContentValues();
         cv.put(FRIENDS_COLUMN_NOTIFICATIONS,enabled ? 1 : 0);

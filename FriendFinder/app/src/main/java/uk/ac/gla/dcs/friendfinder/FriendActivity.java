@@ -13,7 +13,9 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
+import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -24,6 +26,8 @@ public class FriendActivity extends AppCompatActivity {
 
     protected static final String TAG = "FriendActivity";
     private Friend friend;
+
+    private String phoneInputText = "";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -129,18 +133,46 @@ public class FriendActivity extends AppCompatActivity {
             startActivity(callIntent);
         }
         catch(Exception e) {
+            Toast.makeText(getApplicationContext(), getString(R.string.cant_make_call), Toast.LENGTH_LONG).show();
             Log.e(TAG, "Unable to make call");
         }
     }
 
     public void editPhoneNumber(View view) {
-        Intent callIntent = new Intent(Intent.ACTION_CALL, Uri.parse(friend.getPhone()));
-        try {
-            startActivity(callIntent);
-        }
-        catch(Exception e) {
-            Log.e(TAG, "Unable to make call");
-        }
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle(R.string.edit_phone_number);
+
+        LinearLayout layout = new LinearLayout(this);
+        layout.setOrientation(LinearLayout.VERTICAL);
+
+        final EditText nameEdit = new EditText(this);
+        final EditText phoneEdit = new EditText(this);
+
+        nameEdit.setText(friend.getName());
+        phoneEdit.setText(friend.getPhone());
+
+        nameEdit.setHint(R.string.name_hint);
+        phoneEdit.setHint(R.string.phone_hint);
+
+        layout.addView(nameEdit);
+        layout.addView(phoneEdit);
+
+        builder.setView(layout);
+
+        builder.setPositiveButton(getString(R.string.save), new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                DatabaseHelper.getInstance(getBaseContext()).setNameAndPhoneForFriend(friend.getId(),nameEdit.getText().toString(),phoneEdit.getText().toString());
+            }
+        });
+        builder.setNegativeButton(getString(R.string.cancel), new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+
+            }
+        });
+
+        builder.show();
     }
 
     public void deleteContact(View view) {
