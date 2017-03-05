@@ -266,6 +266,8 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer {
                 Friend upToDateFriend = DatabaseHelper.getInstance(getBaseContext()).getFriendById(friends.get(i).getId());
 
                 ImageView strengthIcon = (ImageView) v.findViewById(R.id.icon);
+
+                TextView firstLine = (TextView) v.findViewById(R.id.firstLine);
                 TextView secondLine = (TextView) v.findViewById(R.id.secondLine);
                 int drawable;
 
@@ -284,6 +286,8 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer {
                 }
 
                 strengthIcon.setImageResource(drawable);
+
+                firstLine.setText(upToDateFriend.getName());
                 secondLine.setText(getString(R.string.last_seen) + " " + DateUtils.getRelativeTimeSpanString(upToDateFriend.getLastUpdate().getTime()));
             }
 

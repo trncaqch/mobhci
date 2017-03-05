@@ -5,8 +5,10 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.text.format.DateUtils;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -16,16 +18,21 @@ import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.Date;
+import java.util.List;
 
 
 public class FriendActivity extends AppCompatActivity {
 
     protected static final String TAG = "FriendActivity";
     private Friend friend;
+    private Handler mHandler;
+
+    final int REFRESH_INTERVAL = 1000;
 
     private String phoneInputText = "";
 
@@ -49,8 +56,10 @@ public class FriendActivity extends AppCompatActivity {
         Friend contextFriend = DatabaseHelper.getInstance(getBaseContext()).getFriendById(Long.parseLong(getIntent().getStringExtra("friendId")));
         this.friend = contextFriend;
 
-        TextView topLabel = (TextView) this.findViewById(R.id.topLabel);
-        ImageView strengthIcon = (ImageView) this.findViewById(R.id.signalImage);
+        if(friend == null) {
+            finish();
+        }
+
         CheckBox enableNotificationCheckbox = (CheckBox) this.findViewById(R.id.enableNotificationCheckbox);
         enableNotificationCheckbox.setChecked(friend.notificationsEnabled());
 
@@ -60,37 +69,6 @@ public class FriendActivity extends AppCompatActivity {
                DatabaseHelper.getInstance(getBaseContext()).setNotificationsEnabledForFriend(friend.getId(), isChecked);
            }
        });
-
-        int drawable;
-
-        String labelPart2 = getString(R.string.is_nearby);
-
-        if(friend.getLastUpdate().after(new Date(System.currentTimeMillis() - MainActivity.SHORT_TIMEOUT_INTERVAL))) {
-            if (friend.getLastStrength() < MainActivity.CLOSE_SIGNAL_STRENGTH) {
-                drawable = R.drawable.signal3;
-            } else if (friend.getLastStrength() < MainActivity.FAR_SIGNAL_STRENGTH) {
-                drawable = R.drawable.signal2;
-            } else {
-                drawable = R.drawable.signal1;
-            }
-        } else if(friend.getLastUpdate().after(new Date(System.currentTimeMillis() - MainActivity.LONG_TIMEOUT_INTERVAL))) {
-            drawable = R.drawable.signal0;
-            labelPart2 = getString(R.string.just_seen);
-        } else {
-            drawable = R.drawable.signalempty;
-            labelPart2 = getString(R.string.is_not_nearby);
-        }
-
-        topLabel.setText(friend.getName() + "\n" + labelPart2);
-
-        strengthIcon.setImageResource(drawable);
-
-        if(friend == null) {
-            finish();
-        }
-
-        getSupportActionBar().setTitle(friend.getName());
-
     }
 
     @Override
@@ -98,14 +76,29 @@ public class FriendActivity extends AppCompatActivity {
         super.onDestroy();
     }
 
+    Runnable mStatusChecker = new Runnable() {
+        @Override
+        public void run() {
+            try {
+                refreshScanResults();
+            } finally {
+                mHandler.postDelayed(mStatusChecker, REFRESH_INTERVAL);
+            }
+        }
+    };
+
     @Override
     public void onResume() {
         super.onResume();
+        mHandler = new Handler();
+        mStatusChecker.run();
+        refreshScanResults();
     }
 
     @Override
     public void onPause() {
         super.onPause();
+        mHandler.removeCallbacks(mStatusChecker);
     }
 
     @Override
@@ -121,6 +114,37 @@ public class FriendActivity extends AppCompatActivity {
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    public synchronized void refreshScanResults() {
+        Friend upToDateFriend = DatabaseHelper.getInstance(getBaseContext()).getFriendById(friend.getId());
+        ImageView strengthIcon = (ImageView) this.findViewById(R.id.signalImage);
+
+        TextView firstLine = (TextView) this.findViewById(R.id.topLabel);
+        TextView secondLine = (TextView) this.findViewById(R.id.bottomLabel);
+
+        int drawable;
+
+        if(upToDateFriend.getLastUpdate().after(new Date(System.currentTimeMillis() - MainActivity.SHORT_TIMEOUT_INTERVAL))) {
+            if (upToDateFriend.getLastStrength() < MainActivity.CLOSE_SIGNAL_STRENGTH) {
+                drawable = R.drawable.signal3;
+            } else if (upToDateFriend.getLastStrength() < MainActivity.FAR_SIGNAL_STRENGTH) {
+                drawable = R.drawable.signal2;
+            } else {
+                drawable = R.drawable.signal1;
+            }
+            secondLine.setText(getString(R.string.is_nearby));
+        } else if(upToDateFriend.getLastUpdate().after(new Date(System.currentTimeMillis() - MainActivity.LONG_TIMEOUT_INTERVAL))) {
+            drawable = R.drawable.signal0;
+            secondLine.setText(getString(R.string.just_seen));
+        } else {
+            drawable = R.drawable.signalempty;
+            secondLine.setText(getString(R.string.last_seen) + " " + DateUtils.getRelativeTimeSpanString(upToDateFriend.getLastUpdate().getTime()));
+        }
+
+        strengthIcon.setImageResource(drawable);
+        firstLine.setText(upToDateFriend.getName());
+        getSupportActionBar().setTitle(upToDateFriend.getName());
     }
 
     public void shareContact(View view) {
