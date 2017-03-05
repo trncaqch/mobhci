@@ -2,6 +2,7 @@ package uk.ac.gla.dcs.friendfinder;
 
 import android.Manifest;
 import android.annotation.TargetApi;
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -45,6 +46,7 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer {
     protected static final String TAG = "MainActivity";
     private static final int PERMISSION_REQUEST_COARSE_LOCATION = 1;
     private FriendListAdapter adapter;
+    private Activity monitoringActivity;
 
     static final long SHORT_TIMEOUT_INTERVAL = 30 * 1000;
     static final long LONG_TIMEOUT_INTERVAL = 5 * 60 * 1000;
@@ -89,6 +91,8 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer {
             }
         });
 
+        this.monitoringActivity = null;
+
         verifyBluetooth();
         logToDisplay("Application just launched");
 
@@ -112,14 +116,11 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer {
                 builder.show();
             }
         }
-
-        beaconManager.bind(this);
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        beaconManager.unbind(this);
     }
 
     Runnable mStatusChecker = new Runnable() {
@@ -168,6 +169,9 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer {
 
         mHandler = new Handler();
         mStatusChecker.run();
+        beaconManager.bind(this);
+        logToDisplay("Setting backgroundMode to false");
+        beaconManager.setBackgroundMode(false);
     }
 
     @Override
@@ -175,6 +179,9 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer {
         super.onPause();
         ((FriendFinderApplication) this.getApplicationContext()).setMonitoringActivity(null);
         mHandler.removeCallbacks(mStatusChecker);
+        beaconManager.unbind(this);
+        logToDisplay("Setting backgroundMode to true");
+        beaconManager.setBackgroundMode(true);
     }
 
     private void setAdapter() {
@@ -297,7 +304,7 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer {
                 boolean addedSomething = false;
                 if (beacons.size() > 0) {
                     for(Beacon beacon : beacons) {
-                        int updated = DatabaseHelper.getInstance(getBaseContext()).updateTimestampAndStrengthForBeacon(beacon.toString(), (int)(beacon.getDistance() * 10000));
+                        int updated = DatabaseHelper.getInstance(getBaseContext()).updateTimestampAndStrengthForBeacon(beacon, (int)(beacon.getDistance() * 10000));
                         logToDisplay("Set distance to " + (int)(beacon.getDistance() * 10000));
                         if(updated > 0) {
                             final Beacon beaconToPass = beacon;
@@ -307,7 +314,7 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer {
                                 }
                             });
                         } else {
-                            DatabaseHelper.getInstance(getBaseContext()).addNewFriend("Test Friend","07514700183",beacon.toString());
+                            DatabaseHelper.getInstance(getBaseContext()).addNewFriend("Test Friend","07514700183",beacon);
                         }
                     }
                 }
@@ -337,5 +344,9 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer {
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    public void setMonitoringActivity(Activity activity) {
+        this.monitoringActivity = activity;
     }
 }

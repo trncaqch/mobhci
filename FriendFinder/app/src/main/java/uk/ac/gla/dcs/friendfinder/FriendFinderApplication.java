@@ -8,17 +8,24 @@ import android.app.TaskStackBuilder;
 import android.content.Context;
 import android.content.Intent;
 import android.database.sqlite.SQLiteDatabase;
+import android.media.RingtoneManager;
+import android.net.Uri;
+import android.os.RemoteException;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 
+import org.altbeacon.beacon.Beacon;
 import org.altbeacon.beacon.BeaconManager;
 import org.altbeacon.beacon.BeaconParser;
+import org.altbeacon.beacon.Identifier;
+import org.altbeacon.beacon.RangeNotifier;
 import org.altbeacon.beacon.Region;
 import org.altbeacon.beacon.powersave.BackgroundPowerSaver;
 import org.altbeacon.beacon.startup.BootstrapNotifier;
 import org.altbeacon.beacon.startup.RegionBootstrap;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 public class FriendFinderApplication extends Application implements BootstrapNotifier {
@@ -29,75 +36,76 @@ public class FriendFinderApplication extends Application implements BootstrapNot
     private MainActivity monitoringActivity = null;
     private SQLiteDatabase database;
 
+    public List<Region> regions;
+
     public void onCreate() {
         super.onCreate();
         BeaconManager beaconManager = org.altbeacon.beacon.BeaconManager.getInstanceForApplication(this);
 
         database = openOrCreateDatabase("friendfinder",MODE_PRIVATE,null);
 
-
-        // By default the AndroidBeaconLibrary will only find AltBeacons.  If you wish to make it
-        // find a different type of beacon, you must specify the byte layout for that beacon's
-        // advertisement with a line like below.  The example shows how to find a beacon with the
-        // same byte layout as AltBeacon but with a beaconTypeCode of 0xaabb.  To find the proper
-        // layout expression for other beacon types, do a web search for "setBeaconLayout"
-        // including the quotes.
-        //
-        //beaconManager.getBeaconParsers().clear();
-        //beaconManager.getBeaconParsers().add(new BeaconParser().
-        //        setBeaconLayout("m:2-3=beac,i:4-19,i:20-21,i:22-23,p:24-24,d:25-25"));
-
         Log.d(TAG, "setting up background monitoring for beacons and power saving");
         beaconManager.getBeaconParsers().add(new BeaconParser().setBeaconLayout("m:2-3=0215,i:4-19,i:20-21,i:22-23,p:24-24"));
 
+        setupRegions();
 
-        // wake up the app when a beacon is seen
-        Region region = new Region("backgroundRegion",
-                null, null, null);
-        regionBootstrap = new RegionBootstrap(this, region);
-
-        // simply constructing this class and holding a reference to it in your custom Application
-        // class will automatically cause the BeaconLibrary to save battery whenever the application
-        // is not visible.  This reduces bluetooth power usage by about 60%
         backgroundPowerSaver = new BackgroundPowerSaver(this);
+        beaconManager.setBackgroundBetweenScanPeriod(10000);
+        beaconManager.setBackgroundMode(true);
+    }
 
-        // If you wish to test beacon detection in the Android Emulator, you can use code like this:
-        // BeaconManager.setBeaconSimulator(new TimedBeaconSimulator() );
-        // ((TimedBeaconSimulator) BeaconManager.getBeaconSimulator()).createTimedSimulatedBeacons();
+    public void setupRegions() {
+        regionBootstrap = null;
+        List<Friend> friends = DatabaseHelper.getInstance(getBaseContext()).getAllFriends();
+        this.regions = new ArrayList<Region>();
+
+        for(Friend friend : friends) {
+            if(friend.getBeaconId1() == null && friend.getBeaconId2() == null && friend.getBeaconId3() == null) {
+                Log.w(TAG, "setupRegions: Found friend with all-null regions");
+            } else {
+                Region region = new Region(Long.toString(friend.getId()),
+                        Identifier.parse(friend.getBeaconId1()), Identifier.parse(friend.getBeaconId2()), Identifier.parse(friend.getBeaconId3()));
+                Log.d(TAG, "setupRegions: Adding new region - " + region.toString());
+                regions.add(region);
+            }
+        }
+        regionBootstrap = new RegionBootstrap(this, regions);
     }
 
     @Override
     public void didEnterRegion(Region arg0) {
-        // In this example, this class sends a notification to the user whenever a Beacon
-        // matching a Region (defined above) are first seen.
-        Log.d(TAG, "did enter region.");
+        if(arg0.getId1() == null && arg0.getId2() == null && arg0.getId3() == null) {
+            return;
+        }
+
+        Log.d(TAG, "didEnterRegion: FOUND " + arg0.toString());
+        if(monitoringActivity == null) {
+            Log.d(TAG, "Sending notification.");
+            sendNotification(arg0);
+        } else {
+            Log.d(TAG, "didRangeBeaconsInRegion: App is in foreground. No notification.");
+        }
+    }
+
+    /*@Override
+    public void didRangeBeaconsInRegion(Collection<Beacon> beacons, Region region) {
+        Log.d(TAG, "didRangeBeaconsInRegion -- beacons: " + beacons.toString());
         if (!haveDetectedBeaconsSinceBoot) {
             Log.d(TAG, "auto launching MainActivity");
-
-            // The very first time since boot that we detect an beacon, we launch the
-            // MainActivity
             Intent intent = new Intent(this, MainActivity.class);
             intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            // Important:  make sure to add android:launchMode="singleInstance" in the manifest
-            // to keep multiple copies of this activity from getting created if the user has
-            // already manually launched the app.
+
             this.startActivity(intent);
             haveDetectedBeaconsSinceBoot = true;
         } else {
-            if (monitoringActivity != null) {
-                // If the Monitoring Activity is visible, we log info about the beacons we have
-                // seen on its display
-                monitoringActivity.logToDisplay("I see a beacon again" );
-            } else {
-                // If we have already seen beacons before, but the monitoring activity is not in
-                // the foreground, we send a notification to the user on subsequent detections.
+            if(monitoringActivity == null) {
                 Log.d(TAG, "Sending notification.");
-                sendNotification(arg0);
+                sendNotification(region);
+            } else {
+                Log.d(TAG, "didRangeBeaconsInRegion: App is in foreground. No notification.");
             }
         }
-
-
-    }
+    }*/
 
     @Override
     public void didExitRegion(Region region) {
@@ -113,33 +121,35 @@ public class FriendFinderApplication extends Application implements BootstrapNot
         }
     }
 
-    private void sendNotification(Region region) {
+    private void sendNotification(Region arg0) {
+        Log.d(TAG, "sendNotification: sendNotification for " + arg0.getUniqueId());
+        Friend friend = DatabaseHelper.getInstance(getApplicationContext()).getFriendById(Long.parseLong(arg0.getUniqueId()));
+        if(friend != null) {
+            NotificationCompat.Builder builder =
+                    new NotificationCompat.Builder(this)
+                            .setContentTitle(friend.getName() + " is nearby")
+                            .setContentText("Open BeamPal for more")
+                            .setSmallIcon(R.drawable.notification);
 
-        List<Friend> foundFriend = DatabaseHelper.getInstance(getBaseContext()).getAllFriends();
-        StringBuilder notificationString = new StringBuilder();
-        int numberOfMatches = 0;
+            builder.setVibrate(new long[] { 0, 500, 200, 500, 200 });
 
-        /*for(Friend friend : foundFriend) {
-            if(region.matchesBeacon(friend.bea))
-        }*/
+            Uri alarmSound = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
+            builder.setSound(alarmSound);
 
-        NotificationCompat.Builder builder =
-                new NotificationCompat.Builder(this)
-                        .setContentTitle("Beacon Reference Application")
-                        .setContentText("An beacon is nearby.")
-                        .setSmallIcon(R.drawable.noti);
-
-        TaskStackBuilder stackBuilder = TaskStackBuilder.create(this);
-        stackBuilder.addNextIntent(new Intent(this, MainActivity.class));
-        PendingIntent resultPendingIntent =
-                stackBuilder.getPendingIntent(
-                        0,
-                        PendingIntent.FLAG_UPDATE_CURRENT
-                );
-        builder.setContentIntent(resultPendingIntent);
-        NotificationManager notificationManager =
-                (NotificationManager) this.getSystemService(Context.NOTIFICATION_SERVICE);
-        notificationManager.notify(1, builder.build());
+            TaskStackBuilder stackBuilder = TaskStackBuilder.create(this);
+            stackBuilder.addNextIntent(new Intent(this, MainActivity.class));
+            PendingIntent resultPendingIntent =
+                    stackBuilder.getPendingIntent(
+                            0,
+                            PendingIntent.FLAG_UPDATE_CURRENT
+                    );
+            builder.setContentIntent(resultPendingIntent);
+            NotificationManager notificationManager =
+                    (NotificationManager) this.getSystemService(Context.NOTIFICATION_SERVICE);
+            notificationManager.notify(1, builder.build());
+        } else {
+            Log.e(TAG, "sendNotification: Unable to find friend for notification ID");
+        }
     }
 
     public void setMonitoringActivity(MainActivity activity) {
