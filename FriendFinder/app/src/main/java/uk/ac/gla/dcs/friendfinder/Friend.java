@@ -78,6 +78,11 @@ public class Friend {
     public Date getLastUpdate() {
         return new Date(timestamp);
     }
+
+    public boolean notificationsEnabled() {
+        return notifications != 0;
+    }
+
     @Override
     public String toString() {
         return this.name + " / " + this.phone + " / " + this.beaconId1 + " / " + this.beaconId2 + " / " + this.beaconId3 + " / " + this.lastStrength + " / " + this.timestamp + " / " + this.added;

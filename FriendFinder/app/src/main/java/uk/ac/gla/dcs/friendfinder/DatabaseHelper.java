@@ -171,6 +171,16 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         return friend;
     }
 
+    public synchronized void deleteFriend(Friend friend) {
+        this.deleteFriend(friend.getId());
+    }
+
+    public synchronized void deleteFriend(long friendId) {
+        String whereClause = FRIENDS_COLUMN_ID + "=?";
+        String[] whereArgs = new String[] { friendId + "" };
+        mDatabase.delete(FRIENDS_TABLE, whereClause, whereArgs);
+    }
+
     public synchronized List<Friend> getAllFriends() {
         List<Friend> friends = new ArrayList<>();
         Cursor cursor = mDatabase.query(
@@ -210,14 +220,14 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         return cursor.getLong(columnIndex);
     }
 
-    private synchronized int setNotificationsEnabledForFriend(long friendId, boolean enabled) {
+    public synchronized int setNotificationsEnabledForFriend(long friendId, boolean enabled) {
         ContentValues cv = new ContentValues();
         cv.put(FRIENDS_COLUMN_NOTIFICATIONS,enabled ? 1 : 0);
 
         return mDatabase.update(DatabaseHelper.FRIENDS_TABLE, cv, FRIENDS_COLUMN_ID + "=?", new String[]{friendId + ""});
     }
 
-    private synchronized String getStringFromColumnName(Cursor cursor, String columnName) {
+    public synchronized String getStringFromColumnName(Cursor cursor, String columnName) {
         int columnIndex = cursor.getColumnIndex(columnName);
         return cursor.getString(columnIndex);
     }

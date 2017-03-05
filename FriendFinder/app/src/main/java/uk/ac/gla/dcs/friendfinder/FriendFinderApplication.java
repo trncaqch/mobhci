@@ -62,10 +62,14 @@ public class FriendFinderApplication extends Application implements BootstrapNot
             if(friend.getBeaconId1() == null && friend.getBeaconId2() == null && friend.getBeaconId3() == null) {
                 Log.w(TAG, "setupRegions: Found friend with all-null regions");
             } else {
-                Region region = new Region(Long.toString(friend.getId()),
-                        Identifier.parse(friend.getBeaconId1()), Identifier.parse(friend.getBeaconId2()), Identifier.parse(friend.getBeaconId3()));
-                Log.d(TAG, "setupRegions: Adding new region - " + region.toString());
-                regions.add(region);
+                if(friend.notificationsEnabled()) {
+                    Region region = new Region(Long.toString(friend.getId()),
+                            Identifier.parse(friend.getBeaconId1()), Identifier.parse(friend.getBeaconId2()), Identifier.parse(friend.getBeaconId3()));
+                    Log.d(TAG, "setupRegions: Adding new region - " + region.toString());
+                    regions.add(region);
+                } else {
+                    Log.d(TAG, "setupRegions: Notification turned off for " + friend.getId());
+                }
             }
         }
         regionBootstrap = new RegionBootstrap(this, regions);

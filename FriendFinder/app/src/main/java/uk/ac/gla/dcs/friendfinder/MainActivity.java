@@ -51,6 +51,8 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer {
 
     static final long SHORT_TIMEOUT_INTERVAL = 30 * 1000;
     static final long LONG_TIMEOUT_INTERVAL = 5 * 60 * 1000;
+    static final long CLOSE_SIGNAL_STRENGTH = 10000;
+    static final long FAR_SIGNAL_STRENGTH = 20000;
 
     private final int FULL_REFRESH_INTERVAL = 5000;
     private Handler mHandler;
@@ -268,9 +270,9 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer {
                 int drawable;
 
                 if(upToDateFriend.getLastUpdate().after(new Date(System.currentTimeMillis() - SHORT_TIMEOUT_INTERVAL))) {
-                    if (upToDateFriend.getLastStrength() < 10000) {
+                    if (upToDateFriend.getLastStrength() < CLOSE_SIGNAL_STRENGTH) {
                         drawable = R.drawable.signal3;
-                    } else if (upToDateFriend.getLastStrength() < 20000) {
+                    } else if (upToDateFriend.getLastStrength() < FAR_SIGNAL_STRENGTH) {
                         drawable = R.drawable.signal2;
                     } else {
                         drawable = R.drawable.signal1;
