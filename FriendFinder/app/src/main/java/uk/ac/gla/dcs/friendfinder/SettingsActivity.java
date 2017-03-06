@@ -66,6 +66,18 @@ public class SettingsActivity extends AppCompatActivity {
                 editor.apply();
             }
         });
+        CheckBox notificationNoTimeout = (CheckBox) this.findViewById(R.id.notificationNoTimeout);
+        notificationNoTimeout.setChecked(preferences.getBoolean("notificationNoTimeout", true));
+
+        notificationNoTimeout.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView,boolean isChecked) {
+                editor.putBoolean("notificationNoTimeout", isChecked);
+                editor.apply();
+            }
+        });
+
+
     }
 
     @Override

@@ -40,6 +40,13 @@
             android:layout_marginLeft="20dp"
             android:layout_marginTop="90dp"
             android:text="@string/vibration" />
+        <CheckBox
+            android:id="@+id/notificationNoTimeout"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="20dp"
+            android:layout_marginTop="150dp"
+            android:text="@string/notification_no_timeout" />
 
 
     </FrameLayout>

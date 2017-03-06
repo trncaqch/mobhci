@@ -15,11 +15,12 @@ public class Friend {
     private String beaconId3;
     private long lastStrength;
     private long timestamp;
+    private long lastNotification;
     private long added;
     private long notifications;
 
 
-    public Friend(long id, String name, String phone, String beaconId1, String beaconId2, String beaconId3, long lastStrength, long timestamp, long added, long notifications) {
+    public Friend(long id, String name, String phone, String beaconId1, String beaconId2, String beaconId3, long lastStrength, long timestamp, long lastNotification, long added, long notifications) {
         this.id = id;
         this.name = name;
         this.phone = phone;
@@ -29,11 +30,12 @@ public class Friend {
 
         this.lastStrength = lastStrength;
         this.timestamp = timestamp;
+        this.lastNotification = lastNotification;
         this.added = added;
         this.notifications = notifications;
     }
 
-    public Friend(long id, String name, String phone, Beacon beacon, long lastStrength, long timestamp, long added, long notifications) {
+    public Friend(long id, String name, String phone, Beacon beacon, long lastStrength, long timestamp, long lastNotification, long added, long notifications) {
         this.id = id;
         this.name = name;
         this.phone = phone;
@@ -43,6 +45,7 @@ public class Friend {
 
         this.lastStrength = lastStrength;
         this.timestamp = timestamp;
+        this.lastNotification = lastNotification;
         this.added = added;
         this.notifications = notifications;
     }
@@ -79,13 +82,17 @@ public class Friend {
         return new Date(timestamp);
     }
 
+    public Date getLastNotification() {
+        return new Date(lastNotification);
+    }
+
     public boolean notificationsEnabled() {
         return notifications != 0;
     }
 
     @Override
     public String toString() {
-        return this.name + " / " + this.phone + " / " + this.beaconId1 + " / " + this.beaconId2 + " / " + this.beaconId3 + " / " + this.lastStrength + " / " + this.timestamp + " / " + this.added;
+        return this.name + " / " + this.phone + " / " + this.beaconId1 + " / " + this.beaconId2 + " / " + this.beaconId3 + " / " + this.lastStrength + " / " + this.timestamp + " / " + this.lastNotification + " / " + this.added;
     }
 }
 

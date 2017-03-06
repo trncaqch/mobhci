@@ -48,7 +48,6 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer {
     protected static final String TAG = "MainActivity";
     private static final int PERMISSION_REQUEST_COARSE_LOCATION = 1;
     private FriendListAdapter adapter;
-    private Activity monitoringActivity;
 
     static final long SHORT_TIMEOUT_INTERVAL = 30 * 1000;
     static final long LONG_TIMEOUT_INTERVAL = 5 * 60 * 1000;
@@ -57,6 +56,8 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer {
 
     private final int FULL_REFRESH_INTERVAL = 5000;
     private Handler mHandler;
+
+    boolean isPaused;
 
     private BeaconManager beaconManager = BeaconManager.getInstanceForApplication(this);
 
@@ -91,7 +92,6 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer {
             }
         });
 
-        this.monitoringActivity = null;
 
         verifyBluetooth();
         logToDisplay("Application just launched");
@@ -163,7 +163,6 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer {
     @Override
     public void onResume() {
         super.onResume();
-
         refreshScanResults(true);
         ((FriendFinderApplication) this.getApplicationContext()).setMonitoringActivity(this);
 
@@ -172,6 +171,7 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer {
         beaconManager.bind(this);
         logToDisplay("Setting backgroundMode to false");
         beaconManager.setBackgroundMode(false);
+        isPaused = false;
     }
 
     @Override
@@ -182,6 +182,7 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer {
         beaconManager.unbind(this);
         logToDisplay("Setting backgroundMode to true");
         beaconManager.setBackgroundMode(true);
+        isPaused = true;
     }
 
     private void setAdapter() {
@@ -310,21 +311,22 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer {
             public void didRangeBeaconsInRegion(Collection<Beacon> beacons, Region region) {
 
                 logToDisplay("didRangeBeaconsInRegion -- DATABASE: " + DatabaseHelper.getInstance(getBaseContext()).getAllFriends().toString());
-
                 boolean addedSomething = false;
                 if (beacons.size() > 0) {
                     for(Beacon beacon : beacons) {
                         int updated = DatabaseHelper.getInstance(getBaseContext()).updateTimestampAndStrengthForBeacon(beacon, (int)(beacon.getDistance() * 10000));
                         logToDisplay("Set distance to " + (int)(beacon.getDistance() * 10000));
                         if(updated > 0) {
-                            final Beacon beaconToPass = beacon;
                             MainActivity.this.runOnUiThread(new Runnable() {
                                 public void run() {
                                     refreshScanResults(false);
                                 }
                             });
+                            if(isPaused) {
+                                Friend friendToBuzz = DatabaseHelper.getInstance(getBaseContext()).getFriendByBeacon(beacon.getId1().toString(),beacon.getId2().toString(),beacon.getId3().toString());
+                                ((FriendFinderApplication) getApplicationContext()).sendNotification(new Region(Long.toString(friendToBuzz.getId()),beacon.getId1(),beacon.getId2(),beacon.getId3()));
+                            }
                         } else {
-                            // DatabaseHelper.getInstance(getBaseContext()).addNewFriend("Test Friend","07514700183",beacon);
                             BeaconTriplet triplet = new BeaconTriplet();
                             triplet.beaconId1 = beacon.getId1().toString();
                             triplet.beaconId2 = beacon.getId2().toString();
@@ -338,10 +340,9 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer {
 
         });
 
+        logToDisplay("Starting startRangingBeaconsInRegion");
         try {
-            logToDisplay("Starting again");
             beaconManager.startRangingBeaconsInRegion(new Region("everywhere", null, null, null));
-
         } catch (RemoteException e) {
             logToDisplay("Exception!");
         }
@@ -367,9 +368,5 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer {
         }
 
         return super.onOptionsItemSelected(item);
-    }
-
-    public void setMonitoringActivity(Activity activity) {
-        this.monitoringActivity = activity;
     }
 }

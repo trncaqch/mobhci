@@ -32,12 +32,13 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     public static final String FRIENDS_COLUMN_LAST_STRENGTH = "LASTSTRENGTH";
     public static final String FRIENDS_COLUMN_ADDED = "ADDED";
     public static final String FRIENDS_COLUMN_TIMESTAMP = "TIMESTAMP";
+    public static final String FRIENDS_COLUMN_LAST_NOTIFICATION = "LAST_NOTIFICATION";
     public static final String FRIENDS_COLUMN_NOTIFICATIONS = "NOTIFICATIONS";
 
     private static final String DB_CREATE_FRIENDS_TABLE =
             "CREATE TABLE " + FRIENDS_TABLE + " ("
                     + FRIENDS_COLUMN_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
-                    + FRIENDS_COLUMN_NAME + " TEXT NOT NULL, " + FRIENDS_COLUMN_PHONE + " TEXT, " + FRIENDS_COLUMN_BEACON_ID1 + " TEXT, " + FRIENDS_COLUMN_BEACON_ID2 + " TEXT, " + FRIENDS_COLUMN_BEACON_ID3 + " TEXT, " + FRIENDS_COLUMN_LAST_STRENGTH + " INTEGER, " + FRIENDS_COLUMN_ADDED + " INTEGER, " + FRIENDS_COLUMN_TIMESTAMP + " INTEGER, " + FRIENDS_COLUMN_NOTIFICATIONS + " INTEGER DEFAULT 1 )";
+                    + FRIENDS_COLUMN_NAME + " TEXT NOT NULL, " + FRIENDS_COLUMN_PHONE + " TEXT, " + FRIENDS_COLUMN_BEACON_ID1 + " TEXT, " + FRIENDS_COLUMN_BEACON_ID2 + " TEXT, " + FRIENDS_COLUMN_BEACON_ID3 + " TEXT, " + FRIENDS_COLUMN_LAST_STRENGTH + " INTEGER, " + FRIENDS_COLUMN_ADDED + " INTEGER, " + FRIENDS_COLUMN_TIMESTAMP + " INTEGER, " + FRIENDS_COLUMN_LAST_NOTIFICATION + " INTEGER, " + FRIENDS_COLUMN_NOTIFICATIONS + " INTEGER DEFAULT 1 )";
 
 
     public static synchronized DatabaseHelper getInstance(Context context) {
@@ -106,7 +107,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     public synchronized Friend getFriendById(long friendId) {
         Cursor cursor = mDatabase.query(
                 DatabaseHelper.FRIENDS_TABLE, // table
-                new String[]{DatabaseHelper.FRIENDS_COLUMN_ID, DatabaseHelper.FRIENDS_COLUMN_NAME, DatabaseHelper.FRIENDS_COLUMN_PHONE, DatabaseHelper.FRIENDS_COLUMN_BEACON_ID1, DatabaseHelper.FRIENDS_COLUMN_BEACON_ID2, DatabaseHelper.FRIENDS_COLUMN_BEACON_ID3, DatabaseHelper.FRIENDS_COLUMN_LAST_STRENGTH, DatabaseHelper.FRIENDS_COLUMN_ADDED, DatabaseHelper.FRIENDS_COLUMN_TIMESTAMP, DatabaseHelper.FRIENDS_COLUMN_NOTIFICATIONS}, // column names
+                new String[]{DatabaseHelper.FRIENDS_COLUMN_ID, DatabaseHelper.FRIENDS_COLUMN_NAME, DatabaseHelper.FRIENDS_COLUMN_PHONE, DatabaseHelper.FRIENDS_COLUMN_BEACON_ID1, DatabaseHelper.FRIENDS_COLUMN_BEACON_ID2, DatabaseHelper.FRIENDS_COLUMN_BEACON_ID3, DatabaseHelper.FRIENDS_COLUMN_LAST_STRENGTH, DatabaseHelper.FRIENDS_COLUMN_ADDED, DatabaseHelper.FRIENDS_COLUMN_TIMESTAMP, DatabaseHelper.FRIENDS_COLUMN_LAST_NOTIFICATION, DatabaseHelper.FRIENDS_COLUMN_NOTIFICATIONS}, // column names
                 DatabaseHelper.FRIENDS_COLUMN_ID + " = ?", // where clause
                 new String[]{friendId + ""}, // where params
                 null, // groupby
@@ -123,8 +124,9 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             long friendLastStrength = getLongFromColumnName(cursor, DatabaseHelper.FRIENDS_COLUMN_LAST_STRENGTH);
             long friendAdded = getLongFromColumnName(cursor, DatabaseHelper.FRIENDS_COLUMN_ADDED);
             long friendTimestamp = getLongFromColumnName(cursor, DatabaseHelper.FRIENDS_COLUMN_TIMESTAMP);
+            long friendLastNotification = getLongFromColumnName(cursor, DatabaseHelper.FRIENDS_COLUMN_LAST_NOTIFICATION);
             long friendNotifications = getLongFromColumnName(cursor, DatabaseHelper.FRIENDS_COLUMN_NOTIFICATIONS);
-            friend = new Friend(friendId, friendName, friendPhone, friendBeaconId1, friendBeaconId2, friendBeaconId3, friendLastStrength, friendTimestamp, friendAdded, friendNotifications);
+            friend = new Friend(friendId, friendName, friendPhone, friendBeaconId1, friendBeaconId2, friendBeaconId3, friendLastStrength, friendTimestamp, friendLastNotification, friendAdded, friendNotifications);
             cursor.moveToNext();
         }
         cursor.close();
@@ -138,6 +140,12 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         return mDatabase.update(DatabaseHelper.FRIENDS_TABLE, cv, FRIENDS_COLUMN_BEACON_ID1 + "=? AND " + FRIENDS_COLUMN_BEACON_ID2 + "=? AND " + FRIENDS_COLUMN_BEACON_ID3 + "=?", new String[]{beaconId1 + "", beaconId2 + "", beaconId3 + ""});
     }
 
+    public synchronized int updateLastNotificationForFriend(long friendId) {
+        ContentValues cv = new ContentValues();
+        cv.put(FRIENDS_COLUMN_LAST_NOTIFICATION,new java.util.Date().getTime());
+        return mDatabase.update(DatabaseHelper.FRIENDS_TABLE, cv, FRIENDS_COLUMN_ID + "=?", new String[]{friendId + ""});
+    }
+
     public synchronized int updateTimestampAndStrengthForBeacon(Beacon beacon, long strength) {
         return this.updateTimestampAndStrengthForBeacon(beacon.getId1().toString(), beacon.getId2().toString(), beacon.getId3().toString(), strength);
     }
@@ -145,7 +153,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     public synchronized Friend getFriendByBeacon(String beaconId1, String beaconId2, String beaconId3) {
         Cursor cursor = mDatabase.query(
                 DatabaseHelper.FRIENDS_TABLE, // table
-                new String[]{DatabaseHelper.FRIENDS_COLUMN_ID, DatabaseHelper.FRIENDS_COLUMN_NAME, DatabaseHelper.FRIENDS_COLUMN_PHONE, DatabaseHelper.FRIENDS_COLUMN_BEACON_ID1, DatabaseHelper.FRIENDS_COLUMN_BEACON_ID2, DatabaseHelper.FRIENDS_COLUMN_BEACON_ID3, DatabaseHelper.FRIENDS_COLUMN_LAST_STRENGTH, DatabaseHelper.FRIENDS_COLUMN_ADDED, DatabaseHelper.FRIENDS_COLUMN_TIMESTAMP, DatabaseHelper.FRIENDS_COLUMN_NOTIFICATIONS}, // column names
+                new String[]{DatabaseHelper.FRIENDS_COLUMN_ID, DatabaseHelper.FRIENDS_COLUMN_NAME, DatabaseHelper.FRIENDS_COLUMN_PHONE, DatabaseHelper.FRIENDS_COLUMN_BEACON_ID1, DatabaseHelper.FRIENDS_COLUMN_BEACON_ID2, DatabaseHelper.FRIENDS_COLUMN_BEACON_ID3, DatabaseHelper.FRIENDS_COLUMN_LAST_STRENGTH, DatabaseHelper.FRIENDS_COLUMN_ADDED, DatabaseHelper.FRIENDS_COLUMN_TIMESTAMP, DatabaseHelper.FRIENDS_COLUMN_LAST_NOTIFICATION, DatabaseHelper.FRIENDS_COLUMN_NOTIFICATIONS}, // column names
                 DatabaseHelper.FRIENDS_COLUMN_BEACON_ID1 + " = ? AND " + FRIENDS_COLUMN_BEACON_ID2 + "=? AND " + FRIENDS_COLUMN_BEACON_ID3 + "=?", // where clause
                 new String[]{beaconId1 + "", beaconId2 + "", beaconId3 + ""}, // where params
                 null, // groupby
@@ -163,8 +171,9 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             long friendLastStrength = getLongFromColumnName(cursor, DatabaseHelper.FRIENDS_COLUMN_LAST_STRENGTH);
             long friendAdded = getLongFromColumnName(cursor, DatabaseHelper.FRIENDS_COLUMN_ADDED);
             long friendTimestamp = getLongFromColumnName(cursor, DatabaseHelper.FRIENDS_COLUMN_TIMESTAMP);
+            long friendLastNotification = getLongFromColumnName(cursor, DatabaseHelper.FRIENDS_COLUMN_LAST_NOTIFICATION);
             long friendNotifications = getLongFromColumnName(cursor, DatabaseHelper.FRIENDS_COLUMN_NOTIFICATIONS);
-            friend = new Friend(friendId, friendName, friendPhone, friendBeaconId1, friendBeaconId2, friendBeaconId3, friendLastStrength, friendTimestamp, friendAdded, friendNotifications);
+            friend = new Friend(friendId, friendName, friendPhone, friendBeaconId1, friendBeaconId2, friendBeaconId3, friendLastStrength, friendTimestamp, friendLastNotification, friendAdded, friendNotifications);
             cursor.moveToNext();
         }
         cursor.close();
@@ -185,7 +194,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         List<Friend> friends = new ArrayList<>();
         Cursor cursor = mDatabase.query(
                 DatabaseHelper.FRIENDS_TABLE, // table
-                new String[]{DatabaseHelper.FRIENDS_COLUMN_ID, DatabaseHelper.FRIENDS_COLUMN_NAME, DatabaseHelper.FRIENDS_COLUMN_PHONE, DatabaseHelper.FRIENDS_COLUMN_BEACON_ID1, DatabaseHelper.FRIENDS_COLUMN_BEACON_ID2, DatabaseHelper.FRIENDS_COLUMN_BEACON_ID3, DatabaseHelper.FRIENDS_COLUMN_LAST_STRENGTH, DatabaseHelper.FRIENDS_COLUMN_ADDED, DatabaseHelper.FRIENDS_COLUMN_TIMESTAMP, DatabaseHelper.FRIENDS_COLUMN_NOTIFICATIONS}, // column names
+                new String[]{DatabaseHelper.FRIENDS_COLUMN_ID, DatabaseHelper.FRIENDS_COLUMN_NAME, DatabaseHelper.FRIENDS_COLUMN_PHONE, DatabaseHelper.FRIENDS_COLUMN_BEACON_ID1, DatabaseHelper.FRIENDS_COLUMN_BEACON_ID2, DatabaseHelper.FRIENDS_COLUMN_BEACON_ID3, DatabaseHelper.FRIENDS_COLUMN_LAST_STRENGTH, DatabaseHelper.FRIENDS_COLUMN_ADDED, DatabaseHelper.FRIENDS_COLUMN_TIMESTAMP, DatabaseHelper.FRIENDS_COLUMN_LAST_NOTIFICATION, DatabaseHelper.FRIENDS_COLUMN_NOTIFICATIONS}, // column names
                 null, // where clause
                 null, // where params
                 null, // groupby
@@ -195,7 +204,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         Friend friend = null;
 
         while (!cursor.isAfterLast()) {
-            Log.d("DATABASE","Reading something");
             long friendId = getLongFromColumnName(cursor, DatabaseHelper.FRIENDS_COLUMN_ID);
             String friendName = getStringFromColumnName(cursor, DatabaseHelper.FRIENDS_COLUMN_NAME);
             String friendPhone = getStringFromColumnName(cursor, DatabaseHelper.FRIENDS_COLUMN_PHONE);
@@ -205,9 +213,9 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             long friendLastStrength = getLongFromColumnName(cursor, DatabaseHelper.FRIENDS_COLUMN_LAST_STRENGTH);
             long friendAdded = getLongFromColumnName(cursor, DatabaseHelper.FRIENDS_COLUMN_ADDED);
             long friendTimestamp = getLongFromColumnName(cursor, DatabaseHelper.FRIENDS_COLUMN_TIMESTAMP);
+            long friendLastNotification = getLongFromColumnName(cursor, DatabaseHelper.FRIENDS_COLUMN_LAST_NOTIFICATION);
             long friendNotifications = getLongFromColumnName(cursor, DatabaseHelper.FRIENDS_COLUMN_NOTIFICATIONS);
-            friend = new Friend(friendId, friendName, friendPhone, friendBeaconId1, friendBeaconId2, friendBeaconId3, friendLastStrength, friendTimestamp, friendAdded, friendNotifications);
-            Log.d("DATABASE","Read " + friend.toString() + "  -- " + friendName);
+            friend = new Friend(friendId, friendName, friendPhone, friendBeaconId1, friendBeaconId2, friendBeaconId3, friendLastStrength, friendTimestamp, friendLastNotification, friendAdded, friendNotifications);
             friends.add(friend);
             cursor.moveToNext();
         }

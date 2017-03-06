@@ -28,6 +28,7 @@ import org.altbeacon.beacon.startup.RegionBootstrap;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -38,6 +39,7 @@ public class FriendFinderApplication extends Application implements BootstrapNot
     private MainActivity monitoringActivity = null;
     private SQLiteDatabase database;
 
+    public final long NOTIFICATION_TIMEOUT_INTERVAL = 30 * 60 * 1000;
     public final long GENERIC_STRENGTH = 25000;
     public ConcurrentHashMap<String,BeaconTriplet> unknownBeacons;
 
@@ -54,6 +56,7 @@ public class FriendFinderApplication extends Application implements BootstrapNot
 
         backgroundPowerSaver = new BackgroundPowerSaver(this);
         beaconManager.setBackgroundBetweenScanPeriod(10000);
+
         beaconManager.setBackgroundMode(true);
     }
 
@@ -103,7 +106,7 @@ public class FriendFinderApplication extends Application implements BootstrapNot
     public void didDetermineStateForRegion(int state, Region region) {
     }
 
-    private void sendNotification(Region arg0) {
+    public void sendNotification(Region arg0) {
         Log.d(TAG, "sendNotification: sendNotification for " + arg0.getUniqueId());
 
         SharedPreferences preferences = getApplicationContext().getSharedPreferences("MyPreferences", getApplicationContext().MODE_PRIVATE);
@@ -113,32 +116,37 @@ public class FriendFinderApplication extends Application implements BootstrapNot
 
             Friend friend = DatabaseHelper.getInstance(getApplicationContext()).getFriendById(Long.parseLong(arg0.getUniqueId()));
             if(friend != null) {
-                NotificationCompat.Builder builder =
-                        new NotificationCompat.Builder(this)
-                                .setContentTitle(friend.getName() + getString(R.string.is_nearby))
-                                .setContentText(getString(R.string.open_for_more))
-                                .setSmallIcon(R.drawable.notification);
-
-                if(preferences.getBoolean("enableVibration", true)) {
-                    builder.setVibrate(new long[]{0, 500, 200, 500, 200});
+                if(friend.getLastNotification().before(new Date(System.currentTimeMillis() - NOTIFICATION_TIMEOUT_INTERVAL)) || preferences.getBoolean("notificationNoTimeout", false)) {
+                    DatabaseHelper.getInstance(getApplicationContext()).updateLastNotificationForFriend(friend.getId());
+                    NotificationCompat.Builder builder =
+                            new NotificationCompat.Builder(this)
+                                    .setContentTitle(friend.getName() + " " + getString(R.string.is_nearby))
+                                    .setContentText(getString(R.string.open_for_more))
+                                    .setSmallIcon(R.drawable.notification);
+    
+                    if(preferences.getBoolean("enableVibration", true)) {
+                        builder.setVibrate(new long[]{0, 500, 200, 500, 200});
+                    } else {
+                        Log.d(TAG, "sendNotification: vibration disabled");
+                    }
+    
+                    Uri alarmSound = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
+                    builder.setSound(alarmSound);
+    
+                    TaskStackBuilder stackBuilder = TaskStackBuilder.create(this);
+                    stackBuilder.addNextIntent(new Intent(this, MainActivity.class));
+                    PendingIntent resultPendingIntent =
+                            stackBuilder.getPendingIntent(
+                                    0,
+                                    PendingIntent.FLAG_UPDATE_CURRENT
+                            );
+                    builder.setContentIntent(resultPendingIntent);
+                    NotificationManager notificationManager =
+                            (NotificationManager) this.getSystemService(Context.NOTIFICATION_SERVICE);
+                    notificationManager.notify(1, builder.build());
                 } else {
-                    Log.d(TAG, "sendNotification: vibration disabled");
+                    Log.d(TAG, "sendNotification: Skipping on notification, just sent one");
                 }
-
-                Uri alarmSound = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
-                builder.setSound(alarmSound);
-
-                TaskStackBuilder stackBuilder = TaskStackBuilder.create(this);
-                stackBuilder.addNextIntent(new Intent(this, MainActivity.class));
-                PendingIntent resultPendingIntent =
-                        stackBuilder.getPendingIntent(
-                                0,
-                                PendingIntent.FLAG_UPDATE_CURRENT
-                        );
-                builder.setContentIntent(resultPendingIntent);
-                NotificationManager notificationManager =
-                        (NotificationManager) this.getSystemService(Context.NOTIFICATION_SERVICE);
-                notificationManager.notify(1, builder.build());
             } else {
                 Log.e(TAG, "sendNotification: Unable to find friend for notification ID");
             }
