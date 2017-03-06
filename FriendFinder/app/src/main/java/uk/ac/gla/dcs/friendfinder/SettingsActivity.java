@@ -82,4 +82,13 @@ public class SettingsActivity extends AppCompatActivity {
     public void onPause() {
         super.onPause();
     }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if (item.getItemId() == android.R.id.home) {
+            finish();
+        }
+
+        return super.onOptionsItemSelected(item);
+    }
 }

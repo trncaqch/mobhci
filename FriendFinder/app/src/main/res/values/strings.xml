@@ -35,4 +35,5 @@
     <string name="pick_beacon_button">Select Beacon</string>
     <string name="no_beacon_selected">No beacon selected</string>
     <string name="add_button">Add</string>
+    <string name="no_friends">You haven\'t added any friends.\n\nTap + to add someone</string>
 </resources>

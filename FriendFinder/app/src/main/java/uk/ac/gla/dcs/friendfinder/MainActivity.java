@@ -86,8 +86,8 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer {
         addbutton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
+                Intent intent = new Intent(MainActivity.this, AddFriendActivity.class);
+                startActivity(intent);
             }
         });
 
@@ -186,8 +186,16 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer {
 
     private void setAdapter() {
         ListView listView = (ListView) findViewById(R.id.listview);
-        adapter = new FriendListAdapter(this.getBaseContext(), DatabaseHelper.getInstance(getBaseContext()).getAllFriends(), this);
+        List<Friend> friends = DatabaseHelper.getInstance(getBaseContext()).getAllFriends();
+        adapter = new FriendListAdapter(this.getBaseContext(), friends, this);
         listView.setAdapter(adapter);
+
+        TextView noFriendsLabel = (TextView) findViewById(R.id.no_friends);
+        if(friends.size() > 0) {
+            noFriendsLabel.setVisibility(View.INVISIBLE);
+        } else {
+            noFriendsLabel.setVisibility(View.VISIBLE);
+        }
     }
 
     private void verifyBluetooth() {
