@@ -41,6 +41,7 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.LinkedHashMap;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class MainActivity extends AppCompatActivity implements BeaconConsumer {
 
@@ -58,7 +59,6 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer {
     private Handler mHandler;
 
     private BeaconManager beaconManager = BeaconManager.getInstanceForApplication(this);
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -316,7 +316,13 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer {
                                 }
                             });
                         } else {
-                            DatabaseHelper.getInstance(getBaseContext()).addNewFriend("Test Friend","07514700183",beacon);
+                            // DatabaseHelper.getInstance(getBaseContext()).addNewFriend("Test Friend","07514700183",beacon);
+                            BeaconTriplet triplet = new BeaconTriplet();
+                            triplet.beaconId1 = beacon.getId1().toString();
+                            triplet.beaconId2 = beacon.getId2().toString();
+                            triplet.beaconId3 = beacon.getId3().toString();
+                            triplet.date = new Date();
+                            ((FriendFinderApplication) getApplicationContext()).unknownBeacons.put(beacon.toString(), triplet);
                         }
                     }
                 }
@@ -335,15 +341,19 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
-
-        //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
             Intent intent = new Intent(MainActivity.this, SettingsActivity.class);
             logToDisplay("Opening Settings");
+            startActivity(intent);
+            return true;
+        } else if (id == R.id.action_profile) {
+            Toast.makeText(getApplicationContext(), getString(R.string.not_implemented), Toast.LENGTH_SHORT).show();
+        } else if (id == R.id.action_support) {
+            Toast.makeText(getApplicationContext(), getString(R.string.not_implemented), Toast.LENGTH_LONG).show();
+        } else if (id == R.id.action_addsomeone) {
+            Intent intent = new Intent(MainActivity.this, AddFriendActivity.class);
+            logToDisplay("Opening Add Someone");
             startActivity(intent);
             return true;
         }

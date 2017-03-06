@@ -29,6 +29,7 @@ import org.altbeacon.beacon.startup.RegionBootstrap;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class FriendFinderApplication extends Application implements BootstrapNotifier {
     private static final String TAG = "BeaconReferenceApp";
@@ -38,6 +39,7 @@ public class FriendFinderApplication extends Application implements BootstrapNot
     private SQLiteDatabase database;
 
     public final long GENERIC_STRENGTH = 25000;
+    public ConcurrentHashMap<String,BeaconTriplet> unknownBeacons;
 
     public List<Region> regions;
 
@@ -46,7 +48,7 @@ public class FriendFinderApplication extends Application implements BootstrapNot
         BeaconManager beaconManager = org.altbeacon.beacon.BeaconManager.getInstanceForApplication(this);
 
         database = openOrCreateDatabase("friendfinder",MODE_PRIVATE,null);
-
+        unknownBeacons = new ConcurrentHashMap<String,BeaconTriplet>();
         beaconManager.getBeaconParsers().add(new BeaconParser().setBeaconLayout("m:2-3=0215,i:4-19,i:20-21,i:22-23,p:24-24"));
         setupRegions();
 

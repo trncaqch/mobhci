@@ -28,4 +28,11 @@
     <string name="save">Save</string>
     <string name="cant_make_call">Unable to make call</string>
     <string name="vibration">Vibration</string>
+    <string name="action_addsomeone">Add Contact</string>
+    <string name="action_profile">Profile</string>
+    <string name="action_support">Support</string>
+    <string name="add_friend">Add Friend</string>
+    <string name="pick_beacon_button">Select Beacon</string>
+    <string name="no_beacon_selected">No beacon selected</string>
+    <string name="add_button">Add</string>
 </resources>
