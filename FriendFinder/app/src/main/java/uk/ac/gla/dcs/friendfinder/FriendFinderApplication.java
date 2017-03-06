@@ -7,12 +7,14 @@ import android.app.PendingIntent;
 import android.app.TaskStackBuilder;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.database.sqlite.SQLiteDatabase;
 import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.RemoteException;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
+import android.widget.CheckBox;
 
 import org.altbeacon.beacon.Beacon;
 import org.altbeacon.beacon.BeaconManager;
@@ -101,32 +103,46 @@ public class FriendFinderApplication extends Application implements BootstrapNot
 
     private void sendNotification(Region arg0) {
         Log.d(TAG, "sendNotification: sendNotification for " + arg0.getUniqueId());
-        Friend friend = DatabaseHelper.getInstance(getApplicationContext()).getFriendById(Long.parseLong(arg0.getUniqueId()));
-        if(friend != null) {
-            NotificationCompat.Builder builder =
-                    new NotificationCompat.Builder(this)
-                            .setContentTitle(friend.getName() + getString(R.string.is_nearby))
-                            .setContentText(getString(R.string.open_for_more))
-                            .setSmallIcon(R.drawable.notification);
 
-            builder.setVibrate(new long[] { 0, 500, 200, 500, 200 });
+        SharedPreferences preferences = getApplicationContext().getSharedPreferences("MyPreferences", getApplicationContext().MODE_PRIVATE);
+        final SharedPreferences.Editor editor = preferences.edit();
 
-            Uri alarmSound = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
-            builder.setSound(alarmSound);
+        if(preferences.getBoolean("enableAllNotifications", true)) {
 
-            TaskStackBuilder stackBuilder = TaskStackBuilder.create(this);
-            stackBuilder.addNextIntent(new Intent(this, MainActivity.class));
-            PendingIntent resultPendingIntent =
-                    stackBuilder.getPendingIntent(
-                            0,
-                            PendingIntent.FLAG_UPDATE_CURRENT
-                    );
-            builder.setContentIntent(resultPendingIntent);
-            NotificationManager notificationManager =
-                    (NotificationManager) this.getSystemService(Context.NOTIFICATION_SERVICE);
-            notificationManager.notify(1, builder.build());
+            Friend friend = DatabaseHelper.getInstance(getApplicationContext()).getFriendById(Long.parseLong(arg0.getUniqueId()));
+            if(friend != null) {
+                NotificationCompat.Builder builder =
+                        new NotificationCompat.Builder(this)
+                                .setContentTitle(friend.getName() + getString(R.string.is_nearby))
+                                .setContentText(getString(R.string.open_for_more))
+                                .setSmallIcon(R.drawable.notification);
+
+                if(preferences.getBoolean("enableVibration", true)) {
+                    builder.setVibrate(new long[]{0, 500, 200, 500, 200});
+                } else {
+                    Log.d(TAG, "sendNotification: vibration disabled");
+                }
+
+                Uri alarmSound = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
+                builder.setSound(alarmSound);
+
+                TaskStackBuilder stackBuilder = TaskStackBuilder.create(this);
+                stackBuilder.addNextIntent(new Intent(this, MainActivity.class));
+                PendingIntent resultPendingIntent =
+                        stackBuilder.getPendingIntent(
+                                0,
+                                PendingIntent.FLAG_UPDATE_CURRENT
+                        );
+                builder.setContentIntent(resultPendingIntent);
+                NotificationManager notificationManager =
+                        (NotificationManager) this.getSystemService(Context.NOTIFICATION_SERVICE);
+                notificationManager.notify(1, builder.build());
+            } else {
+                Log.e(TAG, "sendNotification: Unable to find friend for notification ID");
+            }
+
         } else {
-            Log.e(TAG, "sendNotification: Unable to find friend for notification ID");
+            Log.d(TAG, "sendNotification: notifications disabled app-wise");
         }
     }
 

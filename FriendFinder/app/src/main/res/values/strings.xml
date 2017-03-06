@@ -1,5 +1,6 @@
 <resources>
     <string name="app_name">BeamPal</string>
+    <string name="settings">Settings</string>
     <string name="action_settings">Settings</string>
     <string name="is_nearby"> is nearby</string>
     <string name="is_not_nearby"> is not nearby</string>
@@ -26,4 +27,5 @@
     <string name="phone_hint">Phone Number</string>
     <string name="save">Save</string>
     <string name="cant_make_call">Unable to make call</string>
+    <string name="vibration">Vibration</string>
 </resources>

@@ -34,8 +34,6 @@ public class FriendActivity extends AppCompatActivity {
 
     final int REFRESH_INTERVAL = 1000;
 
-    private String phoneInputText = "";
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);

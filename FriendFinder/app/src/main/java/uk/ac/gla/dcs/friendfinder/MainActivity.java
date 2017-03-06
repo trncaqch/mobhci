@@ -342,6 +342,9 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer {
 
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
+            Intent intent = new Intent(MainActivity.this, SettingsActivity.class);
+            logToDisplay("Opening Settings");
+            startActivity(intent);
             return true;
         }
 
