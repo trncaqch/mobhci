@@ -1,11 +1,15 @@
 package uk.ac.gla.dcs.friendfinder;
 
+import android.Manifest;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.text.format.DateUtils;
@@ -149,11 +153,19 @@ public class FriendActivity extends AppCompatActivity {
     }
 
     public void callFriend(View view) {
-        Intent callIntent = new Intent(Intent.ACTION_CALL, Uri.parse(friend.getPhone()));
         try {
-            startActivity(callIntent);
+            int permissionCheck = ContextCompat.checkSelfPermission(this,
+                    Manifest.permission.CALL_PHONE);
+            if(permissionCheck == PackageManager.PERMISSION_DENIED) {
+                ActivityCompat.requestPermissions(this,
+                        new String[]{Manifest.permission.CALL_PHONE},
+                        1);
+            } else {
+                Intent callIntent = new Intent(Intent.ACTION_CALL, Uri.parse("tel:"+friend.getPhone()));
+                startActivity(callIntent);
+            }
         }
-        catch(Exception e) {
+        catch(SecurityException e) {
             Toast.makeText(getApplicationContext(), getString(R.string.cant_make_call), Toast.LENGTH_LONG).show();
             Log.e(TAG, "Unable to make call");
         }
