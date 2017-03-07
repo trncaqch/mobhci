@@ -4,7 +4,7 @@
     <string name="action_settings">Settings</string>
     <string name="is_nearby">is nearby</string>
     <string name="is_not_nearby">is not nearby</string>
-    <string name="just_seen">was just seen</string>
+    <string name="just_seen">was just seen</string>r
     <string name="enable_notifications">Enable Notifications</string>
     <string name="delete_contact">Remove Contact</string>
     <string name="share_contact">Share Contact</string>
@@ -36,5 +36,5 @@
     <string name="no_beacon_selected">No beacon selected</string>
     <string name="add_button">Add</string>
     <string name="no_friends">You haven\'t added any friends.\n\nTap + to add someone</string>
-    <string name="notification_no_timeout">Send notifications without timeout (for testing only)</string>
+    <string name="notification_no_timeout">Send notifications at each detection, without timeout (very annoying, for testing only)</string>
 </resources>
